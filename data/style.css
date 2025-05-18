@@ -1,0 +1,150 @@
+/* Reset and base */
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f5f8fa;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1rem;
+  min-height: 100vh;
+  margin: 0;
+}
+
+parent {
+  width: 100%;
+  display: flex;
+}
+
+
+right
+h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+}
+h2 {
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+  color: #2980b9;
+  text-align: center;
+}
+.uid {
+  font-size: 1.5rem;
+  font-weight: 600;
+  background: #fff;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+.button-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.2s ease;
+}
+button.primary {
+  background-color: #2980b9;
+  color: white;
+  box-shadow: 0 4px 6px rgb(41 128 185 / 0.3);
+}
+button.primary:hover {
+  background-color: #1c5980;
+}
+button.secondary {
+  background-color: #8e44ad;
+  color: white;
+  box-shadow: 0 4px 6px rgb(142 68 173 / 0.3);
+}
+button.secondary:hover {
+  background-color: #6d3399;
+}
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.form-container {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 1.5rem;
+}
+label {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  display: block;
+  color: #2c3e50;
+}
+input[type="text"] {
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 1.2rem;
+  border-radius: 6px;
+  border: 1.5px solid #ccc;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+input[type="text"]:focus {
+  border-color: #2980b9;
+  outline: none;
+  box-shadow: 0 0 6px rgb(41 128 185 / 0.3);
+}
+#registerBtn, #bookRegisterBtn {
+  width: 100%;
+  font-size: 1.05rem;
+  background-color: #27ae60;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgb(39 174 96 / 0.3);
+}
+#registerBtn:hover:not(:disabled), #bookRegisterBtn:hover:not(:disabled) {
+  background-color: #1e874b;
+}
+.hidden {
+  display: none;
+}
+#status {
+  margin-top: 1.5rem;
+  font-weight: 600;
+  min-height: 1.2em;
+  color: #e74c3c;
+  text-align: center;
+}
+#status.success {
+  color: #27ae60;
+}
+@media (max-width: 480px) {
+  .button-group {
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  button {
+    width: 100%;
+  }
+  .form-container, .uid {
+    padding: 1.5rem;
+    max-width: 100%;
+  }
+}

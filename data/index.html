@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Uriel Noob Project</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div>
+    <h1>📶 Uriel Noob project</h1>
+
+    <p class="uid" id="uid" tabindex="0">Please select an action</p>
+
+    <div class="button-group">
+      <button id="scanBtn" class="primary">Register student</button>
+      <button id="scanBookBtn" class="secondary">Register book</button>
+    </div>
+
+    <div class="form-container hidden" id="formContainer" role="region" aria-live="polite">
+      <h2>User Registration</h2>
+      <form id="registerForm" novalidate>
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required placeholder="Enter your full name" />
+
+        <label for="year_level">Year Level</label>
+        <input type="text" id="year_level" name="year_level" required placeholder="e.g. 3rd Year" />
+
+        <label for="section">Section</label>
+        <input type="text" id="section" name="section" required placeholder="Your section" />
+
+        <label for="course">Course</label>
+        <input type="text" id="course" name="course" required placeholder="Your course" />
+
+        <button type="submit" id="registerBtn">Register User</button>
+      </form>
+    </div>
+
+    <div class="form-container hidden" id="bookFormContainer" role="region" aria-live="polite">
+      <h2>Book Registration</h2>
+      <form id="bookForm">
+        <label for="book_name">Book Name</label>
+        <input type="text" id="book_name" required placeholder="Enter book title" />
+        <button type="submit" id="bookRegisterBtn">Register Book</button>
+      </form>
+    </div>
+  </div>
+
+  <p id="status" role="alert" aria-live="assertive"></p>
+
+  <script src="script.js"></script>
+</body>
+</html>
