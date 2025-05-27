@@ -5,8 +5,23 @@ fetch('/clear-uid').catch(err => {
 
 let isScanning = false;
 let isBookScanning = false;
+let isLoginScanning = false;
   
+document.getElementById('loginBtn').addEventListener('click', () => {
+  isLoginScanning = true;
+  isScanning = false;
+  isBookScanning = false;
+  document.getElementById('uid').textContent = 'Initializing login scan...';
+  document.getElementById('status').textContent = '';
 
+  fetch('/clear-uid')
+    .then(() => fetch('/start-scan'))
+    .catch(err => {
+      console.error("Failed to start login scan", err);
+      document.getElementById('status').textContent = 'Failed to start login scan.';
+      isLoginScanning = false;
+    });
+});
 // Scan user button event listener
 document.getElementById('scanBtn').addEventListener('click', () => {
   isScanning = true;
@@ -42,7 +57,7 @@ document.getElementById('scanBookBtn').addEventListener('click', () => {
 
 // Polling for UID if scan is triggered
 setInterval(() => {
-  if (!isScanning && !isBookScanning) return;
+  if (!isScanning && !isBookScanning && !isLoginScanning) return;
 
   fetch('/uid?type=' + (isBookScanning ? 'book' : 'user'))
     .then(res => res.json())
@@ -58,6 +73,37 @@ setInterval(() => {
       }
 
       uidElem.dataset.value = data.uid;
+
+      if (!data.uid) {
+        uidElem.textContent = 'Please scan...';
+        return;
+      }
+
+      uidElem.dataset.value = data.uid;
+
+      if (isLoginScanning) {
+        isLoginScanning = false;
+        uidElem.textContent = `UID: ${data.uid} — Logging in`;
+
+        if (data.registered) {
+          statusElem.textContent = "Login successful. Redirecting...";
+          setTimeout(() => {
+            sessionStorage.setItem("userUID", data.uid);
+            window.location.href = "/dashboard";
+          }, 1500);
+        } else {
+          statusElem.textContent = "RFID not registered. Access denied.";
+          setTimeout(() => {
+            uidElem.textContent = 'Please select an action';
+            uidElem.removeAttribute('data-value');
+            statusElem.textContent = '';
+          }, 3000);
+        }
+
+        formContainer.classList.add('hidden');
+        bookFormContainer.classList.add('hidden');
+        return;
+      }
 
       if (isBookScanning) {
         // Book scan flow

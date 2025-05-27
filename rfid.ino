@@ -31,29 +31,49 @@ bool scanRequested = false;
 unsigned long scanStartTime = 0;
 const unsigned long scanTimeout = 10000;
 
-void handleFileRead(String path) {
-  if (path == "/") path = "/index.html";
+void handleFileRead(String path)
+{
+  if (path == "/")
+    path = "/index.html";
+
+  // If the path doesn't have a file extension, add .html
+  if (!path.endsWith(".html") && !path.endsWith(".css") &&
+      !path.endsWith(".js") && !path.endsWith(".json") &&
+      !path.endsWith(".ico"))
+  {
+    path += ".html";
+  }
 
   String contentType = "text/plain";
-  if (path.endsWith(".html")) contentType = "text/html";
-  else if (path.endsWith(".css")) contentType = "text/css";
-  else if (path.endsWith(".js")) contentType = "application/javascript";
-  else if (path.endsWith(".json")) contentType = "application/json";
-  else if (path.endsWith(".ico")) contentType = "image/x-icon";
+  if (path.endsWith(".html"))
+    contentType = "text/html";
+  else if (path.endsWith(".css"))
+    contentType = "text/css";
+  else if (path.endsWith(".js"))
+    contentType = "application/javascript";
+  else if (path.endsWith(".json"))
+    contentType = "application/json";
+  else if (path.endsWith(".ico"))
+    contentType = "image/x-icon";
 
-  if (SPIFFS.exists(path)) {
+  if (SPIFFS.exists(path))
+  {
     File file = SPIFFS.open(path, "r");
     server.streamFile(file, contentType);
     file.close();
-  } else {
+  }
+  else
+  {
     server.send(404, "text/plain", "404: File Not Found");
   }
 }
 
-void handleUID() {
-  String type = server.arg("type");  // "user" or "book", default to user
+void handleUID()
+{
+  String type = server.arg("type");
 
-  if (!newUIDScanned) {
+  if (!newUIDScanned)
+  {
     server.send(200, "application/json", "{\"uid\": \"\", \"registered\": false}");
     return;
   }
@@ -79,11 +99,10 @@ void handleUID() {
   server.send(200, "application/json", jsonResponse);
 }
 
-
-
-
-void handleSaveUID() {
-  if (!newUIDScanned) {
+void handleSaveUID()
+{
+  if (!newUIDScanned)
+  {
     server.send(400, "text/plain", "No UID to save");
     return;
   }
@@ -101,17 +120,22 @@ void handleSaveUID() {
   int httpCode = https.PATCH(payload);
   https.end();
 
-  if (httpCode == 200) {
+  if (httpCode == 200)
+  {
     server.send(200, "text/plain", "UID saved to Firebase!");
-  } else {
+  }
+  else
+  {
     server.send(500, "text/plain", "Failed to save UID");
   }
 
   newUIDScanned = false;
 }
 
-void handleRegisterUser() {
-  if (!server.hasArg("plain")) {
+void handleRegisterUser()
+{
+  if (!server.hasArg("plain"))
+  {
     server.send(400, "text/plain", "Missing request body");
     return;
   }
@@ -120,7 +144,8 @@ void handleRegisterUser() {
   DynamicJsonDocument doc(1024);
   DeserializationError error = deserializeJson(doc, body);
 
-  if (error) {
+  if (error)
+  {
     server.send(400, "text/plain", "Invalid JSON");
     return;
   }
@@ -131,7 +156,8 @@ void handleRegisterUser() {
   String section = doc["section"] | "";
   String course = doc["course"] | "";
 
-  if (uid == "") {
+  if (uid == "")
+  {
     server.send(400, "text/plain", "UID is required");
     return;
   }
@@ -148,7 +174,8 @@ void handleRegisterUser() {
   int checkCode = https.GET();
   https.end();
 
-  if (checkCode == 200) {
+  if (checkCode == 200)
+  {
     server.send(200, "text/plain", "UID already registered");
     return;
   }
@@ -156,11 +183,16 @@ void handleRegisterUser() {
   // Step 2: Register new user
   String registerUrl = checkUrl;
   String payload = "{ \"fields\": {"
-                   "\"uid\": {\"stringValue\": \"" + uid + "\"},"
-                   "\"name\": {\"stringValue\": \"" + name + "\"},"
-                   "\"year_level\": {\"stringValue\": \"" + year_level + "\"},"
-                   "\"section\": {\"stringValue\": \"" + section + "\"},"
-                   "\"course\": {\"stringValue\": \"" + course + "\"}"
+                   "\"uid\": {\"stringValue\": \"" +
+                   uid + "\"},"
+                   "\"name\": {\"stringValue\": \"" +
+                   name + "\"},"
+                   "\"year_level\": {\"stringValue\": \"" +
+                   year_level + "\"},"
+                   "\"section\": {\"stringValue\": \"" +
+                   section + "\"},"
+                   "\"course\": {\"stringValue\": \"" +
+                   course + "\"}"
                    "} }";
 
   https.begin(client, registerUrl);
@@ -170,50 +202,64 @@ void handleRegisterUser() {
   String response = https.getString();
   https.end();
 
-  if (httpCode == 200) {
+  if (httpCode == 200)
+  {
     scannedUID = "";
     newUIDScanned = false;
 
     server.send(200, "text/plain", "User registered successfully!");
-  } else {
+  }
+  else
+  {
     server.send(500, "text/plain", "Failed to register user. HTTP Code: " + String(httpCode) + ", Response: " + response);
   }
 }
 
-
-void setup() {
+void setup()
+{
   Serial.begin(115200);
-  Serial.println("Server running on port 80"); 
+  Serial.println("Server running on port 80");
   SPI.begin(SPI_CLK, SPI_MISO, SPI_MOSI, SPI_SS);
   mfrc522.PCD_Init();
 
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
     Serial.print(".");
   }
   Serial.println("\nConnected! IP:");
   Serial.println(WiFi.localIP());
 
-  if (!SPIFFS.begin(true)) {
+  if (!SPIFFS.begin(true))
+  {
     Serial.println("SPIFFS mount failed");
     return;
   }
 
-  server.on("/", []() { handleFileRead("/index.html"); });
+  server.on("/", []()
+  {
+    handleFileRead("/index.html");
+  });
   server.on("/uid", handleUID);
   server.on("/save-uid", handleSaveUID);
   server.on("/register-user", HTTP_POST, handleRegisterUser);
   server.on("/register-book", HTTP_POST, handleRegisterBook);
   server.on("/clear-uid", handleClearUID);
   server.on("/start-scan", handleStartScan);
-  server.onNotFound([]() { handleFileRead(server.uri()); });
+  server.on("/book-info", HTTP_GET, handleBookInfo);
+  server.on("/borrow-books", HTTP_POST, handleBorrowBooks);
+  server.onNotFound([]()
+  {
+    handleFileRead(server.uri());
+  });
 
   server.begin();
 }
 
-void loop() {
+void loop()
+{
   server.handleClient();
 
   // Only scan when requested
@@ -221,7 +267,8 @@ void loop() {
     return;
 
   // Stop if timeout reached
-  if (millis() - scanStartTime > scanTimeout) {
+  if (millis() - scanStartTime > scanTimeout)
+  {
     scanRequested = false;
     return;
   }
@@ -235,8 +282,10 @@ void loop() {
   lastScanTime = millis();
   scannedUID = ""; // clear previous UID
 
-  for (byte i = 0; i < mfrc522.uid.size; i++) {
-    if (mfrc522.uid.uidByte[i] < 0x10) scannedUID += "0";
+  for (byte i = 0; i < mfrc522.uid.size; i++)
+  {
+    if (mfrc522.uid.uidByte[i] < 0x10)
+      scannedUID += "0";
     scannedUID += String(mfrc522.uid.uidByte[i], HEX);
   }
   scannedUID.toUpperCase();
@@ -246,14 +295,15 @@ void loop() {
   scanRequested = false; // done scanning
 }
 
-
-void handleClearUID() {
+void handleClearUID()
+{
   scannedUID = "";
   newUIDScanned = false;
   server.send(200, "text/plain", "UID cleared");
 }
 
-void handleStartScan() {
+void handleStartScan()
+{
   scanRequested = true;
   scanStartTime = millis();
   scannedUID = "";
@@ -261,8 +311,10 @@ void handleStartScan() {
   server.send(200, "text/plain", "Scan started");
 }
 
-void handleRegisterBook() {
-  if (!server.hasArg("plain")) {
+void handleRegisterBook()
+{
+  if (!server.hasArg("plain"))
+  {
     server.send(400, "text/plain", "Missing request body");
     return;
   }
@@ -271,7 +323,8 @@ void handleRegisterBook() {
   DynamicJsonDocument doc(512);
   DeserializationError error = deserializeJson(doc, body);
 
-  if (error) {
+  if (error)
+  {
     server.send(400, "text/plain", "Invalid JSON");
     return;
   }
@@ -279,7 +332,8 @@ void handleRegisterBook() {
   String uid = doc["uid"] | "";
   String book_name = doc["book_name"] | "";
 
-  if (uid == "" || book_name == "") {
+  if (uid == "" || book_name == "")
+  {
     server.send(400, "text/plain", "UID and Book Name are required");
     return;
   }
@@ -293,8 +347,10 @@ void handleRegisterBook() {
 
   // Add "borrowed": { "booleanValue": false } to the payload
   String payload = "{ \"fields\": {"
-                   "\"uid\": {\"stringValue\": \"" + uid + "\"},"
-                   "\"book_name\": {\"stringValue\": \"" + book_name + "\"},"
+                   "\"uid\": {\"stringValue\": \"" +
+                   uid + "\"},"
+                   "\"book_name\": {\"stringValue\": \"" +
+                   book_name + "\"},"
                    "\"borrowed\": {\"booleanValue\": false}"
                    "} }";
 
@@ -304,11 +360,110 @@ void handleRegisterBook() {
   String response = https.getString();
   https.end();
 
-  if (httpCode == 200) {
+  if (httpCode == 200)
+  {
     scannedUID = "";
     newUIDScanned = false;
     server.send(200, "text/plain", "Book registered successfully!");
-  } else {
+  }
+  else
+  {
     server.send(500, "text/plain", "Failed to register book. HTTP Code: " + String(httpCode) + ", Response: " + response);
+  }
+}
+
+void handleBookInfo()
+{
+  if (!server.hasArg("uid"))
+  {
+    server.send(400, "application/json", "{\"error\": \"Missing UID\"}");
+    return;
+  }
+
+  String uid = server.arg("uid");
+  WiFiClientSecure client;
+  client.setInsecure();
+  HTTPClient https;
+
+  String url = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
+               "/databases/(default)/documents/books/" + uid;
+
+  https.begin(client, url);
+  int httpCode = https.GET();
+
+  if (httpCode != 200)
+  {
+    server.send(404, "application/json", "{\"error\": \"Book not found\"}");
+    https.end();
+    return;
+  }
+
+  String payload = https.getString();
+  https.end();
+
+  // Parse title
+  DynamicJsonDocument doc(1024);
+  deserializeJson(doc, payload);
+
+  String title = doc["fields"]["book_name"]["stringValue"] | "";
+  String json = "{\"book_name\": \"" + title + "\"}";
+
+  server.send(200, "application/json", json);
+}
+
+void handleBorrowBooks()
+{
+  if (server.method() != HTTP_POST)
+  {
+    server.send(405, "text/plain", "Method Not Allowed");
+    return;
+  }
+
+  DynamicJsonDocument doc(2048);
+  DeserializationError error = deserializeJson(doc, server.arg("plain"));
+
+  if (error)
+  {
+    server.send(400, "text/plain", "Invalid JSON");
+    return;
+  }
+
+  String userUID = doc["userUID"];
+  JsonArray books = doc["books"].as<JsonArray>();
+
+  // Construct Firestore array format
+  String jsonBody = "{ \"fields\": { \"borrowed_books\": { \"arrayValue\": { \"values\": [";
+
+  for (size_t i = 0; i < books.size(); i++)
+  {
+    jsonBody += "{ \"stringValue\": \"" + books[i].as<String>() + "\" }";
+    if (i < books.size() - 1)
+      jsonBody += ",";
+  }
+
+  jsonBody += "]}}}}";
+
+  // PATCH to user doc
+  WiFiClientSecure client;
+  client.setInsecure();
+  HTTPClient https;
+
+  String url = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
+               "/databases/(default)/documents/users/" + userUID + "?updateMask.fieldPaths=borrowed_books";
+
+  https.begin(client, url);
+  https.addHeader("Content-Type", "application/json");
+
+  int httpCode = https.PATCH(jsonBody);
+  String response = https.getString();
+  https.end();
+
+  if (httpCode == 200)
+  {
+    server.send(200, "text/plain", "Books borrowed successfully.");
+  }
+  else
+  {
+    server.send(500, "text/plain", "Failed to borrow books.");
   }
 }
