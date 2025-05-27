@@ -80,7 +80,6 @@ void handleUID()
 
   String collection = (type == "book") ? "books" : "users";
 
-  // Check in Firebase if UID exists in the correct collection
   WiFiClientSecure client;
   client.setInsecure();
   HTTPClient https;
@@ -90,12 +89,31 @@ void handleUID()
 
   https.begin(client, url);
   int httpCode = https.GET();
+
+  String jsonResponse;
+
+  if (httpCode == 200) {
+    // Parse JSON to get the name field
+    String payload = https.getString();
+
+    StaticJsonDocument<1024> doc;
+    DeserializationError error = deserializeJson(doc, payload);
+
+    if (!error) {
+      // Firestore fields are nested under "fields"
+      // and each field has a type key, e.g., stringValue
+      const char* name = doc["fields"]["name"]["stringValue"] | "";
+
+      jsonResponse = "{ \"uid\": \"" + scannedUID + "\", \"registered\": true, \"name\": \"" + String(name) + "\" }";
+    } else {
+      // JSON parse failed, fallback without name
+      jsonResponse = "{ \"uid\": \"" + scannedUID + "\", \"registered\": true }";
+    }
+  } else {
+    jsonResponse = "{ \"uid\": \"" + scannedUID + "\", \"registered\": false }";
+  }
+
   https.end();
-
-  bool isRegistered = (httpCode == 200);
-
-  String jsonResponse = "{ \"uid\": \"" + scannedUID + "\", \"registered\": " + (isRegistered ? "true" : "false") + " }";
-
   server.send(200, "application/json", jsonResponse);
 }
 
@@ -185,15 +203,15 @@ void handleRegisterUser()
   String payload = "{ \"fields\": {"
                    "\"uid\": {\"stringValue\": \"" +
                    uid + "\"},"
-                   "\"name\": {\"stringValue\": \"" +
+                         "\"name\": {\"stringValue\": \"" +
                    name + "\"},"
-                   "\"year_level\": {\"stringValue\": \"" +
+                          "\"year_level\": {\"stringValue\": \"" +
                    year_level + "\"},"
-                   "\"section\": {\"stringValue\": \"" +
+                                "\"section\": {\"stringValue\": \"" +
                    section + "\"},"
-                   "\"course\": {\"stringValue\": \"" +
+                             "\"course\": {\"stringValue\": \"" +
                    course + "\"}"
-                   "} }";
+                            "} }";
 
   https.begin(client, registerUrl);
   https.addHeader("Content-Type", "application/json");
@@ -239,9 +257,7 @@ void setup()
   }
 
   server.on("/", []()
-  {
-    handleFileRead("/index.html");
-  });
+            { handleFileRead("/index.html"); });
   server.on("/uid", handleUID);
   server.on("/save-uid", handleSaveUID);
   server.on("/register-user", HTTP_POST, handleRegisterUser);
@@ -251,9 +267,7 @@ void setup()
   server.on("/book-info", HTTP_GET, handleBookInfo);
   server.on("/borrow-books", HTTP_POST, handleBorrowBooks);
   server.onNotFound([]()
-  {
-    handleFileRead(server.uri());
-  });
+                    { handleFileRead(server.uri()); });
 
   server.begin();
 }
@@ -349,10 +363,10 @@ void handleRegisterBook()
   String payload = "{ \"fields\": {"
                    "\"uid\": {\"stringValue\": \"" +
                    uid + "\"},"
-                   "\"book_name\": {\"stringValue\": \"" +
+                         "\"book_name\": {\"stringValue\": \"" +
                    book_name + "\"},"
-                   "\"borrowed\": {\"booleanValue\": false}"
-                   "} }";
+                               "\"borrowed\": {\"booleanValue\": false}"
+                               "} }";
 
   https.begin(client, url);
   https.addHeader("Content-Type", "application/json");

@@ -1,5 +1,8 @@
 const scannedBooks = [];
 const userUID = sessionStorage.getItem("userUID"); // Store this during login
+const userName = sessionStorage.getItem("userName");
+
+document.getElementById("userName").textContent = userName;
 
 document.getElementById("scanBookBtn").addEventListener("click", async () => {
     document.getElementById("status").textContent = "Scanning book...";
