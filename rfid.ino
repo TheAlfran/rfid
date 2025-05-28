@@ -266,6 +266,7 @@ void setup()
   server.on("/start-scan", handleStartScan);
   server.on("/book-info", HTTP_GET, handleBookInfo);
   server.on("/borrow-books", HTTP_POST, handleBorrowBooks);
+  server.on("/scan-book", HTTP_GET, handleScanBook);
   server.onNotFound([]()
                     { handleFileRead(server.uri()); });
 
@@ -480,4 +481,56 @@ void handleBorrowBooks()
   {
     server.send(500, "text/plain", "Failed to borrow books.");
   }
+}
+
+void handleScanBook()
+{
+  if (!newUIDScanned)
+  {
+    server.send(200, "application/json", "{\"uid\": \"\", \"registered\": false}");
+    return;
+  }
+
+  WiFiClientSecure client;
+  client.setInsecure();
+  HTTPClient https;
+
+  String url = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
+               "/databases/(default)/documents/books/" + scannedUID;
+
+  https.begin(client, url);
+  int httpCode = https.GET();
+
+  String jsonResponse;
+
+  if (httpCode == 200)
+  {
+    String payload = https.getString();
+
+    StaticJsonDocument<1024> doc;
+    DeserializationError error = deserializeJson(doc, payload);
+
+    if (!error)
+    {
+      const char* name = doc["fields"]["name"]["stringValue"] | "";
+      jsonResponse = "{ \"uid\": \"" + scannedUID + "\", \"registered\": true, \"name\": \"" + String(name) + "\" }";
+    }
+    else
+    {
+      jsonResponse = "{ \"uid\": \"" + scannedUID + "\", \"registered\": true }";
+    }
+  }
+  else
+  {
+    jsonResponse = "{ \"uid\": \"" + scannedUID + "\", \"registered\": false }";
+  }
+
+  https.end();
+  server.send(200, "application/json", jsonResponse);
+
+  // Reset UID and trigger next scan for books
+  scannedUID = "";
+  newUIDScanned = false;
+  scanRequested = true;
+  scanStartTime = millis(); // optional, to restart cooldown
 }
