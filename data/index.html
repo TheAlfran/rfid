@@ -40,8 +40,17 @@
     <div class="form-container hidden" id="bookFormContainer" role="region" aria-live="polite">
       <h2>Book Registration</h2>
       <form id="bookForm">
-        <label for="book_name">Book Name</label>
-        <input type="text" id="book_name" required placeholder="Enter book title" />
+        <label for="book_name">Book Name:</label>
+        <input type="text" id="book_name" name="book_name" required />
+
+        <label for="category">Category:</label>
+        <select id="category" name="category" required>
+          <option value="">Select category</option>
+          <option value="English">English</option>
+          <option value="Science">Science</option>
+          <option value="Math">Math</option>
+        </select>
+
         <button type="submit" id="bookRegisterBtn">Register Book</button>
       </form>
     </div>

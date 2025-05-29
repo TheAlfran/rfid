@@ -210,6 +210,7 @@ document.getElementById("bookForm").addEventListener("submit", async (e) => {
 
   const uid = document.getElementById("uid").dataset.value || "";
   const book_name = document.getElementById("book_name").value;
+  const category = document.getElementById("category").value;
   const bookRegisterBtn = document.getElementById("bookRegisterBtn");
 
   bookRegisterBtn.disabled = true;
@@ -220,7 +221,7 @@ document.getElementById("bookForm").addEventListener("submit", async (e) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ uid, book_name }),
+      body: JSON.stringify({ uid, book_name, category }),
     });
 
     const result = await response.text();
