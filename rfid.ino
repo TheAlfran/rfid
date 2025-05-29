@@ -361,11 +361,12 @@ void handleRegisterBook()
                "/databases/(default)/documents/books/" + uid;
 
   String payload = "{ \"fields\": {"
-                   "\"uid\": {\"stringValue\": \"" + uid + "\"},"
-                   "\"book_name\": {\"stringValue\": \"" + book_name + "\"},"
-                   "\"category\": {\"stringValue\": \"" + category + "\"},"
-                   "\"borrowed\": {\"booleanValue\": false}"
-                   "} }";
+                 "\"uid\": {\"stringValue\": \"" + uid + "\"},"
+                 "\"book_name\": {\"stringValue\": \"" + book_name + "\"},"
+                 "\"category\": {\"stringValue\": \"" + category + "\"},"
+                 "\"borrowed\": {\"booleanValue\": false},"
+                 "\"date_to_return\": {\"timestampValue\": \"1970-01-01T00:00:00Z\"}"
+                 "} }";
 
   https.begin(client, url);
   https.addHeader("Content-Type", "application/json");
