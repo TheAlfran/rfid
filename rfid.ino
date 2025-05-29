@@ -345,10 +345,11 @@ void handleRegisterBook()
 
   String uid = doc["uid"] | "";
   String book_name = doc["book_name"] | "";
+  String category = doc["category"] | "";
 
-  if (uid == "" || book_name == "")
+  if (uid == "" || book_name == "" || category == "")
   {
-    server.send(400, "text/plain", "UID and Book Name are required");
+    server.send(400, "text/plain", "UID, Book Name, and Category are required");
     return;
   }
 
@@ -359,14 +360,12 @@ void handleRegisterBook()
   String url = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
                "/databases/(default)/documents/books/" + uid;
 
-  // Add "borrowed": { "booleanValue": false } to the payload
   String payload = "{ \"fields\": {"
-                   "\"uid\": {\"stringValue\": \"" +
-                   uid + "\"},"
-                         "\"book_name\": {\"stringValue\": \"" +
-                   book_name + "\"},"
-                               "\"borrowed\": {\"booleanValue\": false}"
-                               "} }";
+                   "\"uid\": {\"stringValue\": \"" + uid + "\"},"
+                   "\"book_name\": {\"stringValue\": \"" + book_name + "\"},"
+                   "\"category\": {\"stringValue\": \"" + category + "\"},"
+                   "\"borrowed\": {\"booleanValue\": false}"
+                   "} }";
 
   https.begin(client, url);
   https.addHeader("Content-Type", "application/json");
@@ -385,6 +384,7 @@ void handleRegisterBook()
     server.send(500, "text/plain", "Failed to register book. HTTP Code: " + String(httpCode) + ", Response: " + response);
   }
 }
+
 
 void handleBookInfo()
 {
@@ -445,7 +445,7 @@ void handleBorrowBooks()
   String userUID = doc["userUID"];
   JsonArray books = doc["books"].as<JsonArray>();
 
-  // Construct Firestore array format
+  // Step 1: Update user's borrowed_books field
   String jsonBody = "{ \"fields\": { \"borrowed_books\": { \"arrayValue\": { \"values\": [";
 
   for (size_t i = 0; i < books.size(); i++)
@@ -457,27 +457,57 @@ void handleBorrowBooks()
 
   jsonBody += "]}}}}";
 
-  // PATCH to user doc
   WiFiClientSecure client;
   client.setInsecure();
   HTTPClient https;
 
-  String url = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
-               "/databases/(default)/documents/users/" + userUID + "?updateMask.fieldPaths=borrowed_books";
+  String userUrl = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
+                   "/databases/(default)/documents/users/" + userUID +
+                   "?updateMask.fieldPaths=borrowed_books";
 
-  https.begin(client, url);
+  https.begin(client, userUrl);
   https.addHeader("Content-Type", "application/json");
 
-  int httpCode = https.PATCH(jsonBody);
-  String response = https.getString();
+  int userHttpCode = https.PATCH(jsonBody);
+  String userResponse = https.getString();
   https.end();
 
-  if (httpCode == 200)
+  if (userHttpCode != 200)
+  {
+    server.send(500, "text/plain", "Failed to update user borrow list.");
+    return;
+  }
+
+  // Step 2: Update each book's borrowed status to true
+  bool allSuccess = true;
+  for (size_t i = 0; i < books.size(); i++)
+  {
+    String bookUID = books[i].as<String>();
+    String bookUrl = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
+                     "/databases/(default)/documents/books/" + bookUID +
+                     "?updateMask.fieldPaths=borrowed";
+
+    String bookPayload = "{ \"fields\": { \"borrowed\": { \"booleanValue\": true } } }";
+
+    https.begin(client, bookUrl);
+    https.addHeader("Content-Type", "application/json");
+    int bookCode = https.PATCH(bookPayload);
+    String bookResp = https.getString();
+    https.end();
+
+    if (bookCode != 200)
+    {
+      allSuccess = false;
+      Serial.println("Failed to update book: " + bookUID + ", response: " + bookResp);
+    }
+  }
+
+  if (allSuccess)
   {
     server.send(200, "text/plain", "Books borrowed successfully.");
   }
   else
   {
-    server.send(500, "text/plain", "Failed to borrow books.");
+    server.send(206, "text/plain", "Some books failed to update.");
   }
 }
