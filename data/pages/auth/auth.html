@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Uriel Noob Project</title>
+    <link rel="stylesheet" href="/pages/auth/auth.css" />
+    <link rel="stylesheet" href="/constants/color-constant.css" />
+    <link rel="stylesheet" href="/constants/font-constant.css" />
+  </head>
+  <body>
+    <div id="left_container">
+      <div id="body_container">
+        <img src="/assets/rfid.png" class="left_logo" />
+        <p class="left_title">Welcome!</p>
+        <p class="left_subtitle">
+          Register users instantly and track book borrowing
+        </p>
+        <p class="left_subtitle">
+          in real time using RFID — fast, secure, and efficient.
+        </p>
+      </div>
+    </div>
+
+    <div id="right_container">
+      <div id="right_title_container">
+        <p class="right_title">Book Scanner</p>
+        <p class="right_subtitle">
+          is a smart RFID-powered library system that simplifies book
+        </p>
+        <p class="right_subtitle">
+          tracking, borrowing, and inventory management with just a scan.
+        </p>
+      </div>
+
+      <div id="form_container">
+        <div id="form_title_container">
+          <p class="form_title">Please select an action</p>
+        </div>
+
+        <div id="tabs">
+          <button class="tab-button active" onclick="showTab(event, 'login')">
+            Login
+          </button>
+          <button class="tab-button" onclick="showTab(event, 'registration')">
+            Registration
+          </button>
+          <button class="tab-button" onclick="showTab(event, 'register_book')">
+            Register book
+          </button>
+        </div>
+
+        <div id="form_parent_container">
+          <div id="login" class="tab-content active">
+            <div id="login_button">
+              <button
+                id="loginBtn"
+                class="login-button"
+              >
+                <img src="/assets/scan.png" alt="Scan" width="100%" />
+              </button>
+
+              <lottie-player
+                id="login_animation"
+                src="/assets/scanning.json"
+                background="transparent"
+                speed="1"
+                style="width: 250px; height: 250px; display: none"
+                autoplay
+                loop
+              ></lottie-player>
+            </div>
+          </div>
+
+          <div id="registration" class="tab-content">
+            <div id="register_button">
+              <button id="scanBtn" class="register-button">
+                <img src="/assets/scan.png" alt="Scan" width="100%" />
+              </button>
+              <lottie-player
+                id="registration_animation"
+                src="/assets/scanning.json"
+                background="transparent"
+                speed="1"
+                style="width: 250px; height: 250px; display: none"
+                autoplay
+                loop
+              ></lottie-player>
+            </div>
+
+            <div id="formContainer" class="hidden">
+              <form id="registerForm" class="registration_form" novalidate>
+                <label for="name">Full Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  required
+                  placeholder="Enter your full name"
+                />
+
+                <label for="year_level">Year Level</label>
+                <input
+                  type="text"
+                  id="year_level"
+                  name="year_level"
+                  required
+                  placeholder="e.g. 3rd Year"
+                />
+
+                <label for="section">Section</label>
+                <input
+                  type="text"
+                  id="section"
+                  name="section"
+                  required
+                  placeholder="Your section"
+                />
+
+                <label for="course">Course</label>
+                <input
+                  type="text"
+                  id="course"
+                  name="course"
+                  required
+                  placeholder="Your course"
+                />
+
+                <button type="submit" id="registerBtn" class="register_button">
+                  Register User
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div id="register_book" class="tab-content">
+            <div id="registerbook_button">
+              <button id="scanBookBtn" class="registerbook-button">
+                <img src="/assets/scan.png" alt="Scan" width="100%" />
+              </button>
+              <lottie-player
+                id="registerbook_animation"
+                src="/assets/scanning.json"
+                background="transparent"
+                speed="1"
+                style="width: 250px; height: 250px; display: none"
+                autoplay
+                loop
+              ></lottie-player>
+            </div>
+            <div id="bookFormContainer" class="hidden">
+              <form id="bookForm" class="registerbook_form">
+                <label for="book_name">Book Name:</label>
+                <input
+                  type="text"
+                  id="book_name"
+                  name="book_name"
+                  required
+                  placeholder="Enter book title"
+                />
+
+                <label for="category">Category:</label>
+                <select id="category" name="category" required>
+                  <option value="" class="category_text">
+                    Select category
+                  </option>
+                  <option value="English" class="category_text">English</option>
+                  <option value="Science" class="category_text">Science</option>
+                  <option value="Math" class="category_text">Math</option>
+                </select>
+
+                <button
+                  type="submit"
+                  id="bookRegisterBtn"
+                  class="register_button"
+                >
+                  Register Book
+                </button>
+              </form>
+            </div>
+          </div>
+          <div class="status-container">
+            <p class="uid" id="uid" tabindex="0">Click to scan tag</p>
+            <p id="status" role="alert" aria-live="assertive"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="button-group"></div>
+    </div>
+
+    <script src="/pages/auth/auth.js"></script>
+  </body>
+</html>

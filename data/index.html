@@ -1,63 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Uriel Noob Project</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div>
-    <h1>📶 Uriel Noob project</h1>
-
-    <p class="uid" id="uid" tabindex="0">Please select an action</p>
-
-    <div class="button-group">
-      <button id="scanBtn" class="primary">Register student</button>
-      <button id="scanBookBtn" class="secondary">Register book</button>
-      <button id="loginBtn" class="primary">Login with RFID</button>
-    </div>
-
-    <div class="form-container hidden" id="formContainer" role="region" aria-live="polite">
-      <h2>User Registration</h2>
-      <form id="registerForm" novalidate>
-        <label for="name">Full Name</label>
-        <input type="text" id="name" name="name" required placeholder="Enter your full name" />
-
-        <label for="year_level">Year Level</label>
-        <input type="text" id="year_level" name="year_level" required placeholder="e.g. 3rd Year" />
-
-        <label for="section">Section</label>
-        <input type="text" id="section" name="section" required placeholder="Your section" />
-
-        <label for="course">Course</label>
-        <input type="text" id="course" name="course" required placeholder="Your course" />
-
-        <button type="submit" id="registerBtn">Register User</button>
-      </form>
-    </div>
-
-    <div class="form-container hidden" id="bookFormContainer" role="region" aria-live="polite">
-      <h2>Book Registration</h2>
-      <form id="bookForm">
-        <label for="book_name">Book Name:</label>
-        <input type="text" id="book_name" name="book_name" required />
-
-        <label for="category">Category:</label>
-        <select id="category" name="category" required>
-          <option value="">Select category</option>
-          <option value="English">English</option>
-          <option value="Science">Science</option>
-          <option value="Math">Math</option>
-        </select>
-
-        <button type="submit" id="bookRegisterBtn">Register Book</button>
-      </form>
-    </div>
-  </div>
-
-  <p id="status" role="alert" aria-live="assertive"></p>
-
-  <script src="script.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/constants/color-constant.css">
+    <link rel="stylesheet" href="/constants/font-constant.css">
+    <link rel="stylesheet" href="/style.css" />
+    <title>Landing Page | RFID</title>
+  </head>
+  <body>
+    <header><img src="/assets/logo.png" class="logo_image"><p class="header_text">Book Scanner</p></header></header>
+    <div id="parent_container">
+        <div id="child_container">
+            <p class="title">RFID-Based Library Management System</p>
+            <p class="subtitle">Streamline student and book registration with</p>
+            <p class="subtitle">RFID scanning.</p>
+            <button id="get_started_button" onclick="router()">Get Started</button>
+        </div>
+        <div id="language_container">
+            <div id="component_container">
+                <img src="/assets/logo_grayscale.png" class="component_image">
+                <p class="component_text">R.F.I.D</p>
+            </div>
+            <div id="component_container">
+                <img src="/assets/arduino.svg" class="component_image">
+                <p class="component_text">Arduino</p>
+            </div>
+            <div id="component_container">
+                <img src="/assets/html.png" class="component_image">
+                <p class="component_text">HTML</p>
+            </div>
+            <div id="component_container">
+              <img src="/assets/css.png" class="component_image">
+              <p class="component_text">CSS</p>
+            </div>
+            <div id="component_container">
+              <img src="/assets/js.png" class="component_image">
+              <p class="component_text">Javascript</p>
+            </div>
+        </div>
+    </div> 
+    <footer>@2025 Team Uriel</footer>
+    <script src="script.js"></script>
+  </body>
 </html>

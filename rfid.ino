@@ -33,17 +33,22 @@ const unsigned long scanTimeout = 10000;
 
 void handleFileRead(String path)
 {
+  // Log the path to ensure correct file is being requested
+  Serial.println("Request for: " + path);
+  
   if (path == "/")
-    path = "/index.html";
+    path = "/index.html"; // Default to index.html
 
   // If the path doesn't have a file extension, add .html
   if (!path.endsWith(".html") && !path.endsWith(".css") &&
       !path.endsWith(".js") && !path.endsWith(".json") &&
-      !path.endsWith(".ico"))
+      !path.endsWith(".ico") && !path.endsWith(".png") &&
+      !path.endsWith(".svg"))
   {
-    path += ".html";
+    path += ".html"; // Default to HTML if no extension
   }
 
+  // Determine content type
   String contentType = "text/plain";
   if (path.endsWith(".html"))
     contentType = "text/html";
@@ -55,18 +60,22 @@ void handleFileRead(String path)
     contentType = "application/json";
   else if (path.endsWith(".ico"))
     contentType = "image/x-icon";
+  else if (path.endsWith(".png"))
+    contentType = "image/png";  // Add PNG type
+  else if (path.endsWith(".svg"))
+    contentType = "image/svg+xml";  // Add SVG type
 
-  if (SPIFFS.exists(path))
-  {
+  // Serve the file if it exists
+  if (SPIFFS.exists(path)) {
     File file = SPIFFS.open(path, "r");
     server.streamFile(file, contentType);
     file.close();
-  }
-  else
-  {
+  } else {
     server.send(404, "text/plain", "404: File Not Found");
   }
 }
+
+
 
 void handleUID()
 {
