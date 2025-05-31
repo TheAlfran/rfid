@@ -162,13 +162,20 @@ setInterval(() => {
           statusElem.textContent = "RFID already registered.";
           formContainer.classList.add("hidden");
 
+          const buttonImg = document.querySelector('.register-button img');
+          const animation = document.getElementById('registration_animation');
+
           document.getElementById("register_button").classList.remove("hidden");
           
+          if (buttonImg && animation) {
+            animation.style.display = 'none';
+            buttonImg.style.display = 'block';
+          }
 
           // Reset UI after 3 seconds
           setTimeout(() => {
             statusElem.textContent = "";
-            uidElem.textContent = "Please chooose an action";
+            uidElem.textContent = "Click to scan tag";
             uidElem.removeAttribute("data-value");
             // reset flags explicitly
             isScanning = false;
@@ -228,12 +235,29 @@ document
       if (response.ok) {
         document.getElementById("registerForm").reset();
         document.getElementById("formContainer").classList.add("hidden");
-        // reset scanning state after registration
-        document.getElementById("uid").textContent = "Please select an action";
-        document.getElementById("uid").removeAttribute("data-value");
+
+        // Reset the status and uid messages
+        const uidElem = document.getElementById("uid");
+        const statusElem = document.getElementById("status");
+
+        uidElem.textContent = "Click to scan tag";
+        uidElem.removeAttribute("data-value");
+        statusElem.textContent = "";
+
+        statusElem.textContent = result;
+
+        setTimeout(() => {
+          statusElem.textContent = "";
+        }, 3000);
+
         isScanning = false;
 
         document.getElementById("register_button").classList.remove("hidden");
+
+        if (buttonImg && animation) {
+          animation.style.display = 'none';
+          buttonImg.style.display = 'block';
+        }
       }
     } catch (error) {
       document.getElementById(
