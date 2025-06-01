@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/data/pages/admin/admin.css">
+    <link rel="stylesheet" href="/data/constants/color-constant.css" />
+    <link rel="stylesheet" href="/data/constants/font-constant.css" />
+</head>
+<body>
+    <header>
+        <div id="header_left">
+            <img src="/data/assets/logo.png" class="logo_image">
+            <p class="header_text">Book Scanner</p>
+        </div>
+        <div id="header_right">
+            <button class="logout-button">
+                <img src="/data/assets/logout.png" alt="Logout" width="100%" />
+            </button>
+        </div>
+    </header>
+  <div id="parent_container">
+    <div id="title_container">
+      <h1 id="title">Welcome, <span id="userName"></span>!</h1>
+    </div>
+    <div id="tabs">
+      <button class="tab-button active" onclick="showTab(event, 'available_books')">
+        Available Book
+      </button>
+      <button class="tab-button" onclick="showTab(event, 'users_info')">
+        User Info
+      </button>
+      <button class="tab-button" onclick="showTab(event, 'transaction_logs')">
+        Transaction Logs
+      </button>
+    </div>
+    <div class="tab-content active" id="available_books">
+        <div id="available_books_container">
+            <p id="available_books_title">Book Title: </p>
+        </div>
+    </div>
+    <div class="tab-content" id="users_info">
+        <div id="users_container">
+            <p id="users_title">Lists of users: </p>
+        </div>
+    </div>
+    <div class="tab-content" id="transaction_logs">
+      <div id="admin_logs_container">
+        <p id="admin_logs_title">Transaction Logs: </p>
+      </div>
+    </div>
+  </div>
+  <script src="/data/pages/admin/admin.js"></script>
+</body>
+</html>
