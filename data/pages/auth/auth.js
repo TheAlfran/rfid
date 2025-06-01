@@ -117,7 +117,7 @@ setInterval(() => {
           statusElem.textContent = "Login successful. Redirecting...";
 
           setTimeout(() => {
-            window.location.href = "/pages/dashboard/dashboard";
+            window.location.href = "/pages/dashboard/dashboard.html";
           }, 1500);
         } else {
           statusElem.textContent = "RFID not registered. Access denied.";

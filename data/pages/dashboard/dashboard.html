@@ -5,16 +5,83 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard</title>
+  <link rel="stylesheet" href="/pages/dashboard/dashboard.css">
+  <link rel="stylesheet" href="/constants/color-constant.css" />
+  <link rel="stylesheet" href="/constants/font-constant.css" />
 </head>
 <body>
-  <h1>Welcome, <span id="userName"></span>!</h1>
-  <p>You have successfully logged in using your RFID card.</p>
-  <p id="status"></p>
+  <header>
+    <div id="header_left">
+      <img src="/assets/logo.png" class="logo_image">
+      <p class="header_text">Book Scanner</p>
+    </div>
+    <div id="header_right">
+      <button class="logout-button">
+        <img src="/assets/logout.png" alt="Logout" width="100%" />
+      </button>
+    </div>
+  </header>
 
-  <button id="scanBookBtn">Scan Book</button>
-  <ul id="bookList"></ul>
+  <div id="parent_container">
+    <div id="title_container">
+      <h1 id="title">Welcome, <span id="userName"></span>!</h1>
+    </div>
+    <div id="tabs">
+      <button class="tab-button active" onclick="showTab(event, 'borrow_book')">
+        Borrow Book
+      </button>
+      <button class="tab-button" onclick="showTab(event, 'return_book')">
+        Return Book
+      </button>
+      <button class="tab-button" onclick="showTab(event, 'borrowed_books')">
+        Borrowed Books
+      </button>
+    </div>
+    <div class="tab-content active" id="borrow_book">
+      <div id="borrow_book_child">
+        <div id="borrow_left">
+          <label class="borrow_label">Book Title</label>
+          <ul id="bookList"></ul>
 
-  <button id="borrowBtn" class="hidden">Borrow Books</button>
-  <script src="dashboardscript.js"></script>
+          <div id="borrow_left_child">
+            <label for="borrowDate" class="borrow_label">Choose Date</label>
+            <input type="date" id="borrowDate" class="date-picker" />
+            <button id="borrowBtn" class="borrow_books">Borrow Books</button>
+            <p id="status"></p>
+          </div>
+        </div>
+        <div id="borrow_right">
+          <button id="scanBookBtn" class="login-button">
+            <img src="/assets/scan.png" alt="Scan" width="100%" />
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="tab-content" id="return_book">
+      <div id="return_book_child">
+        <div id="return_left">
+          <label class="return_label">Book Title</label>
+          <ul id="bookList"></ul>
+
+          <div id="borrow_left_child">
+            <button id="borrowBtn" class="borrow_books">Borrow Books</button>
+            <p id="status"></p>
+          </div>
+        </div>
+        <div id="return_right">
+          <button id="scanBookBtn" class="login-button">
+            <img src="/assets/scan.png" alt="Scan" width="100%" />
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="tab-content" id="borrowed_books">
+      <div id="borrowed_books_parent">
+        <div id="borrowed_book_title"> Book Title</div>
+        <div id="borrowed_date_title"> Date</div>
+      </div>
+    </div>
+  </div>
+  <script src="/pages/dashboard/dashboard.js"></script>
 </body>
 </html>
