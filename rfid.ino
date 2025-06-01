@@ -275,6 +275,8 @@ void setup()
   server.on("/start-scan", handleStartScan);
   server.on("/book-info", HTTP_GET, handleBookInfo);
   server.on("/borrow-books", HTTP_POST, handleBorrowBooks);
+  server.on("/user-info", HTTP_GET, handleUserInfo);
+  server.on("/return-books", HTTP_POST, handleReturnBooks);
   server.onNotFound([]()
                     { handleFileRead(server.uri()); });
 
@@ -529,5 +531,182 @@ void handleBorrowBooks()
     server.send(200, "text/plain", "Books borrowed successfully.");
   } else {
     server.send(206, "text/plain", "Some books failed to update.");
+  }
+}
+
+void handleUserInfo()
+{
+  if (!server.hasArg("uid")) {
+    server.send(400, "application/json", "{\"error\": \"Missing UID\"}");
+    return;
+  }
+
+  String uid = server.arg("uid");
+
+  WiFiClientSecure client;
+  client.setInsecure();
+  HTTPClient https;
+
+  String url = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
+               "/databases/(default)/documents/users/" + uid;
+
+  https.begin(client, url);
+  int httpCode = https.GET();
+
+  if (httpCode != 200) {
+    server.send(404, "application/json", "{\"error\": \"User not found\"}");
+    https.end();
+    return;
+  }
+
+  String payload = https.getString();
+  https.end();
+
+  DynamicJsonDocument doc(2048);
+  deserializeJson(doc, payload);
+
+  JsonArray borrowedBooksArray = doc["fields"]["borrowed_books"]["arrayValue"]["values"];
+
+  DynamicJsonDocument outDoc(2048);
+  JsonArray outArray = outDoc.createNestedArray("borrowed_books");
+
+  for (JsonVariant bookEntry : borrowedBooksArray) {
+    String bookUID = bookEntry["mapValue"]["fields"]["uid"]["stringValue"] | "";
+    JsonObject bookObj = outArray.createNestedObject();
+    bookObj["uid"] = bookUID;
+  }
+
+  String response;
+  serializeJson(outDoc, response);
+  server.send(200, "application/json", response);
+}
+
+void handleReturnBooks() {
+  if (server.method() != HTTP_POST) {
+    server.send(405, "text/plain", "Method Not Allowed");
+    return;
+  }
+
+  DynamicJsonDocument doc(2048);
+  DeserializationError error = deserializeJson(doc, server.arg("plain"));
+
+  if (error) {
+    server.send(400, "text/plain", "Invalid JSON");
+    return;
+  }
+
+  String userUID = doc["userUID"] | "";
+  JsonArray books = doc["books"].as<JsonArray>();
+
+  if (userUID == "" || books.isNull() || books.size() == 0) {
+    server.send(400, "text/plain", "Missing userUID or books");
+    return;
+  }
+
+  WiFiClientSecure client;
+  client.setInsecure();
+  HTTPClient https;
+
+  bool allBooksReturned = true;
+
+  // Step 1: Update each book to set borrowed = false and clear date_to_return
+  for (size_t i = 0; i < books.size(); i++) {
+    String bookUID = books[i].as<String>();
+    String url = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
+             "/databases/(default)/documents/books/" + bookUID +
+             "?updateMask.fieldPaths=borrowed&updateMask.fieldPaths=date_to_return";
+
+    String payload = "{ \"fields\": {"
+                     "\"borrowed\": {\"booleanValue\": false},"
+                     "\"date_to_return\": {\"timestampValue\": \"1970-01-01T00:00:00Z\"}"
+                     "} }";
+
+
+    https.begin(client, url);
+    https.addHeader("Content-Type", "application/json");
+
+    int httpCode = https.PATCH(payload);
+    String response = https.getString();
+    https.end();
+
+    if (httpCode != 200) {
+      Serial.printf("Failed to update book %s: %d\n", bookUID.c_str(), httpCode);
+      allBooksReturned = false;
+    }
+  }
+
+  if (!allBooksReturned) {
+    server.send(500, "text/plain", "Failed to update some books");
+    return;
+  }
+
+  // Step 2: Get current borrowed_books of user to remove returned books
+  String userUrl = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
+                   "/databases/(default)/documents/users/" + userUID;
+
+  https.begin(client, userUrl);
+  int getUserCode = https.GET();
+
+  if (getUserCode != 200) {
+    https.end();
+    server.send(500, "text/plain", "Failed to fetch user data");
+    return;
+  }
+
+  String userPayload = https.getString();
+  https.end();
+
+  DynamicJsonDocument userDoc(4096);
+  deserializeJson(userDoc, userPayload);
+
+  JsonArray borrowedBooks = userDoc["fields"]["borrowed_books"]["arrayValue"]["values"].as<JsonArray>();
+
+  // Step 3: Prepare new borrowed_books array excluding returned books
+  DynamicJsonDocument newBorrowedBooksDoc(4096);
+  JsonArray newBorrowedBooks = newBorrowedBooksDoc.to<JsonArray>();
+
+  for (JsonObject bookEntry : borrowedBooks) {
+    String bookUID = bookEntry["mapValue"]["fields"]["uid"]["stringValue"] | "";
+
+    bool isReturned = false;
+    for (size_t i = 0; i < books.size(); i++) {
+      if (books[i].as<String>() == bookUID) {
+        isReturned = true;
+        break;
+      }
+    }
+
+    if (!isReturned) {
+      // Add entire book entry (with all its fields) to the new array
+      newBorrowedBooks.add(bookEntry);
+    }
+  }
+
+  // Step 4: Build JSON for PATCH update
+  DynamicJsonDocument updateDoc(4096);
+  JsonObject fields = updateDoc.createNestedObject("fields");
+  JsonObject borrowedBooksField = fields.createNestedObject("borrowed_books");
+  JsonObject arrayValue = borrowedBooksField.createNestedObject("arrayValue");
+  arrayValue["values"] = newBorrowedBooks;
+
+  String newBorrowedBooksJson;
+  serializeJson(updateDoc, newBorrowedBooksJson);
+
+  // Step 5: Update user document borrowed_books field
+  String updateUserUrl = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
+                         "/databases/(default)/documents/users/" + userUID +
+                         "?updateMask.fieldPaths=borrowed_books";
+
+  https.begin(client, updateUserUrl);
+  https.addHeader("Content-Type", "application/json");
+
+  int updateCode = https.PATCH(newBorrowedBooksJson);
+  String updateResponse = https.getString();
+  https.end();
+
+  if (updateCode == 200) {
+    server.send(200, "text/plain", "Books returned successfully!");
+  } else {
+    server.send(500, "text/plain", "Failed to update user borrow list");
   }
 }

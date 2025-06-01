@@ -1,6 +1,9 @@
 const scannedBooks = new Set();
 const userUID = sessionStorage.getItem("userUID"); // Store this during login
 const userName = sessionStorage.getItem("userName");
+const returnScannedBooks = new Set();
+const returnScanBtn = document.getElementById("returnScanBookButton");
+
 
 console.log("User UID:", userUID);
 console.log("User Name:", userName);
@@ -134,3 +137,96 @@ function showStatusMessage(message, duration = 3000) {
     }, duration);
   }
 }
+
+returnScanBtn.addEventListener("click", async () => {
+  if (isScanning) return;
+  isScanning = true;
+  returnScanBtn.disabled = true;
+  document.getElementById("return_status").textContent = "Scanning book...";
+
+  await fetch("/clear-uid");
+  await fetch("/start-scan");
+
+  let lastUID = null;
+
+  const pollInterval = setInterval(async () => {
+    const res = await fetch("/uid?type=book");
+    const data = await res.json();
+
+    if (data.uid && data.uid !== lastUID) {
+      lastUID = data.uid;
+      clearInterval(pollInterval);
+      isScanning = false;
+      returnScanBtn.disabled = false;
+      document.getElementById("return_status").textContent = "Click to start scanning";
+
+      // Prevent duplicates
+      if (returnScannedBooks.has(data.uid)) {
+        showStatusMessage("Book already scanned for return.", 3000);
+        return;
+      }
+
+      const isBorrowedByUser = await checkIfUserHasBook(data.uid);
+      if (!isBorrowedByUser) {
+        showStatusMessage("This book is not borrowed by you.", 3000);
+        return;
+      }
+
+      const title = await getBookTitle(data.uid);
+      const li = document.createElement("li");
+      li.textContent = `${title} (UID: ${data.uid})`;
+      document.getElementById("borrowedBooksList").appendChild(li);
+
+      returnScannedBooks.add(data.uid);
+      showStatusMessage("Book ready for return.", 2000);
+    }
+  }, 1000);
+});
+
+
+async function checkIfUserHasBook(bookUID) {
+  const res = await fetch(`/user-info?uid=${userUID}`);
+  if (!res.ok) return false;
+
+  const data = await res.json();
+  const borrowedBooks = data.borrowed_books || [];
+
+  return borrowedBooks.some(book => book.uid === bookUID);
+}
+
+function showStatusMessage(message, timeout = 3000) {
+  const statusElement = document.getElementById("return_status");
+  const originalText = statusElement.textContent;
+  statusElement.textContent = message;
+  setTimeout(() => {
+    if (!isScanning) {
+      statusElement.textContent = "Click to start scanning";
+    }
+  }, timeout);
+}
+
+
+document.getElementById("returnBtn").addEventListener("click", async () => {
+  if (!userUID || returnScannedBooks.size === 0) {
+    showStatusMessage("No books selected for return.", 3000);
+    return;
+  }
+
+  const res = await fetch("/return-books", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userUID,
+      books: Array.from(returnScannedBooks),
+    }),
+  });
+
+  const text = await res.text();
+  showStatusMessage(text);
+
+  returnScannedBooks.clear();
+  document.getElementById("borrowedBooksList").innerHTML = "";
+});
+
+
+
