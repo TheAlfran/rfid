@@ -6,6 +6,8 @@ fetch("/clear-uid").catch((err) => {
 let isScanning = false;
 let isBookScanning = false;
 let isLoginScanning = false;
+let scanTimeout = null;
+
 
 document.getElementById("loginBtn").addEventListener("click", () => {
   isLoginScanning = true;
@@ -16,6 +18,7 @@ document.getElementById("loginBtn").addEventListener("click", () => {
 
   const buttonImg = document.querySelector('.login-button img');
   const animation = document.getElementById('login_animation');
+
 
     if (buttonImg && animation) {
       buttonImg.style.display = 'none';
@@ -82,7 +85,11 @@ document.getElementById("scanBookBtn").addEventListener("click", () => {
 
 // Polling for UID if scan is triggered
 setInterval(() => {
-  if (!isScanning && !isBookScanning && !isLoginScanning) return;
+  if (!isScanning && !isBookScanning && !isLoginScanning) {
+    clearTimeout(scanTimeout); // No scan in progress, clear any timeout
+    scanTimeout = null;
+    return;
+  }
 
   fetch("/uid?type=" + (isBookScanning ? "book" : "user"))
     .then((res) => res.json())
@@ -94,15 +101,20 @@ setInterval(() => {
 
       if (!data.uid) {
         uidElem.textContent = "Please scan...";
+
+        // ⏱ Trigger refresh if UID not found after 10 seconds
+        if (!scanTimeout) {
+          scanTimeout = setTimeout(() => {
+            location.reload();
+          }, 10000); // 10 seconds
+        }
+
         return;
       }
 
-      uidElem.dataset.value = data.uid;
-
-      if (!data.uid) {
-        uidElem.textContent = "Please scan...";
-        return;
-      }
+      // ✅ UID received — clear timeout
+      clearTimeout(scanTimeout);
+      scanTimeout = null;
 
       uidElem.dataset.value = data.uid;
 
@@ -113,12 +125,17 @@ setInterval(() => {
         if (data.registered) {
           sessionStorage.setItem("userUID", data.uid);
           sessionStorage.setItem("userName", data.name);
-          console.log("User logged in:", data);
           statusElem.textContent = "Login successful. Redirecting...";
-
+          
+          const scannedUID = data.uid;
           setTimeout(() => {
-            window.location.href = "/pages/dashboard/dashboard.html";
+            if (scannedUID === "15A53302") {
+              window.location.href = "/pages/admin/admin.html";
+            } else {
+              window.location.href = "/pages/dashboard/dashboard.html";
+            }
           }, 1500);
+
         } else {
           statusElem.textContent = "RFID not registered. Access denied.";
           setTimeout(() => {
@@ -134,7 +151,6 @@ setInterval(() => {
       }
 
       if (isBookScanning) {
-        // Book scan flow
         isBookScanning = false;
         uidElem.textContent = `UID: ${data.uid} — Book`;
 
@@ -153,7 +169,6 @@ setInterval(() => {
       }
 
       if (isScanning) {
-        // User scan flow
         isScanning = false;
         uidElem.textContent = `UID: ${data.uid}`;
 
@@ -164,20 +179,17 @@ setInterval(() => {
 
           const buttonImg = document.querySelector('.register-button img');
           const animation = document.getElementById('registration_animation');
-
           document.getElementById("register_button").classList.remove("hidden");
-          
+
           if (buttonImg && animation) {
             animation.style.display = 'none';
             buttonImg.style.display = 'block';
           }
 
-          // Reset UI after 3 seconds
           setTimeout(() => {
             statusElem.textContent = "";
             uidElem.textContent = "Click to scan tag";
             uidElem.removeAttribute("data-value");
-            // reset flags explicitly
             isScanning = false;
             isBookScanning = false;
             formContainer.classList.add("hidden");

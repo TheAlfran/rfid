@@ -157,3 +157,20 @@ header {
   font-weight: bold;
   padding: 50px;
 }
+
+
+#book_title, #users_name, #transaction_logs_details{
+  padding-left: 50px;
+}
+
+#admin_logs_container, #available_books_container {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+}
+
+#users_container {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+}

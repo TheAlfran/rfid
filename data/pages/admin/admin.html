@@ -11,12 +11,12 @@
 <body>
     <header>
         <div id="header_left">
-            <img src="/data/assets/logo.png" class="logo_image">
+            <img src="/assets/logo.png" class="logo_image">
             <p class="header_text">Book Scanner</p>
         </div>
         <div id="header_right">
             <button class="logout-button">
-                <img src="/data/assets/logout.png" alt="Logout" width="100%" />
+                <img src="/assets/logout.png" alt="Logout" width="100%" />
             </button>
         </div>
     </header>
@@ -37,17 +37,48 @@
     </div>
     <div class="tab-content active" id="available_books">
         <div id="available_books_container">
+          <div>
             <p id="available_books_title">Book Title: </p>
+          </div>
+          <div>
+            <p id="available_books_title">Category</p>
+          </div>
+          <div>
+            <p id="available_books_title">Status</p>
+          </div>
+          <div>
+            <p id="available_books_title">Return Date</p>
+          </div>
         </div>
     </div>
     <div class="tab-content" id="users_info">
         <div id="users_container">
-            <p id="users_title">Lists of users: </p>
+          <div id="users_info_container">
+            <p id="users_title">Students</p>
+            <p>Uriel</p>
+          </div>
+           <div id="users_info_container">
+            <p id="users_title">Year</p>
+          </div>
+           <div id="users_info_container">
+            <p id="users_title">Section</p>
+          </div>
+           <div id="users_info_container">
+            <p id="users_title">Course</p>
+          </div>
         </div>
     </div>
     <div class="tab-content" id="transaction_logs">
       <div id="admin_logs_container">
-        <p id="admin_logs_title">Transaction Logs: </p>
+        <div>
+          <p id="admin_logs_title">Users</p>
+        </div>
+        <div>
+          <p id="admin_logs_title">Book Name</p>
+        </div>
+         <div>
+          <p id="admin_logs_title">Date Borrowed</p>
+        </div>
       </div>
     </div>
   </div>

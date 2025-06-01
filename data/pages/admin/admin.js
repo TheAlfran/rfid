@@ -1,3 +1,10 @@
+const userUID = sessionStorage.getItem("userUID");
+const userName = sessionStorage.getItem("userName");
+
+if (userName) {
+  document.getElementById("userName").textContent = userName;
+}
+
 function showTab(event, tabId) {
   // Hide all tab contents
   document.querySelectorAll('.tab-content').forEach(content => {
