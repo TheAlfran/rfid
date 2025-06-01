@@ -443,14 +443,13 @@ void handleBookInfo()
 }
 
 
-void handleBorrowBooks()
-{
+void handleBorrowBooks() {
   if (server.method() != HTTP_POST) {
     server.send(405, "text/plain", "Method Not Allowed");
     return;
   }
 
-  DynamicJsonDocument doc(2048);
+  DynamicJsonDocument doc(4096);
   DeserializationError error = deserializeJson(doc, server.arg("plain"));
 
   if (error) {
@@ -462,23 +461,30 @@ void handleBorrowBooks()
   JsonArray books = doc["books"].as<JsonArray>();
   String dateToReturn = doc["dateToReturn"] | "";
 
-  // Step 1: Update user's borrowed_books field
+  if (userUID == "" || books.size() == 0 || dateToReturn == "") {
+    server.send(400, "text/plain", "Missing required fields");
+    return;
+  }
+
+  // Step 1: Build borrowed_books array with book_name
   String jsonBody = "{ \"fields\": { \"borrowed_books\": { \"arrayValue\": { \"values\": [";
 
   for (size_t i = 0; i < books.size(); i++) {
-    String bookUID = books[i].as<String>();
+    String uid = books[i]["uid"].as<String>();
+    String name = books[i]["name"].as<String>();
 
     jsonBody += "{ \"mapValue\": { \"fields\": {"
-                "\"uid\": {\"stringValue\": \"" + bookUID + "\"},"
+                "\"uid\": {\"stringValue\": \"" + uid + "\"},"
+                "\"name\": {\"stringValue\": \"" + name + "\"},"
                 "\"date\": {\"stringValue\": \"" + dateToReturn + "\"}"
                 "} } }";
 
-    if (i < books.size() - 1)
-      jsonBody += ",";
+    if (i < books.size() - 1) jsonBody += ",";
   }
 
   jsonBody += "]}}}}";
 
+  // Step 2: Update Firestore user document
   WiFiClientSecure client;
   client.setInsecure();
   HTTPClient https;
@@ -499,31 +505,30 @@ void handleBorrowBooks()
     return;
   }
 
-  // Step 2: Update each book's borrowed status and return date
+  // Step 3: Update each book's borrowed status
   bool allSuccess = true;
   for (size_t i = 0; i < books.size(); i++) {
-    String bookUID = books[i].as<String>();
+    String uid = books[i]["uid"].as<String>();
+
     String bookUrl = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
-                     "/databases/(default)/documents/books/" + bookUID +
+                     "/databases/(default)/documents/books/" + uid +
                      "?updateMask.fieldPaths=borrowed&updateMask.fieldPaths=date_to_return";
 
-    // Convert date string to timestamp (e.g., "2025-06-01" → "2025-06-01T00:00:00Z")
     String isoDate = dateToReturn + "T00:00:00Z";
-
-    String bookPayload = "{ \"fields\": {"
-                         "\"borrowed\": { \"booleanValue\": true },"
-                         "\"date_to_return\": { \"timestampValue\": \"" + isoDate + "\" }"
-                         "} }";
+    String payload = "{ \"fields\": {"
+                     "\"borrowed\": { \"booleanValue\": true },"
+                     "\"date_to_return\": { \"timestampValue\": \"" + isoDate + "\" }"
+                     "} }";
 
     https.begin(client, bookUrl);
     https.addHeader("Content-Type", "application/json");
-    int bookCode = https.PATCH(bookPayload);
-    String bookResp = https.getString();
+    int code = https.PATCH(payload);
+    String resp = https.getString();
     https.end();
 
-    if (bookCode != 200) {
+    if (code != 200) {
       allSuccess = false;
-      Serial.println("Failed to update book: " + bookUID + ", response: " + bookResp);
+      Serial.printf("Failed to update book %s: %s\n", uid.c_str(), resp.c_str());
     }
   }
 
@@ -533,6 +538,7 @@ void handleBorrowBooks()
     server.send(206, "text/plain", "Some books failed to update.");
   }
 }
+
 
 void handleUserInfo()
 {
