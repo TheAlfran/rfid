@@ -425,20 +425,25 @@ void handleBookInfo()
   String payload = https.getString();
   https.end();
 
-  // Parse title
   DynamicJsonDocument doc(1024);
   deserializeJson(doc, payload);
 
   String title = doc["fields"]["book_name"]["stringValue"] | "";
-  String json = "{\"book_name\": \"" + title + "\"}";
+  bool borrowed = doc["fields"]["borrowed"]["booleanValue"] | false;
+
+  // Compose the response
+  String json = "{";
+  json += "\"book_name\": \"" + title + "\",";
+  json += "\"borrowed\": " + String(borrowed ? "true" : "false");
+  json += "}";
 
   server.send(200, "application/json", json);
 }
 
+
 void handleBorrowBooks()
 {
-  if (server.method() != HTTP_POST)
-  {
+  if (server.method() != HTTP_POST) {
     server.send(405, "text/plain", "Method Not Allowed");
     return;
   }
@@ -446,21 +451,26 @@ void handleBorrowBooks()
   DynamicJsonDocument doc(2048);
   DeserializationError error = deserializeJson(doc, server.arg("plain"));
 
-  if (error)
-  {
+  if (error) {
     server.send(400, "text/plain", "Invalid JSON");
     return;
   }
 
   String userUID = doc["userUID"];
   JsonArray books = doc["books"].as<JsonArray>();
+  String dateToReturn = doc["dateToReturn"] | "";
 
   // Step 1: Update user's borrowed_books field
   String jsonBody = "{ \"fields\": { \"borrowed_books\": { \"arrayValue\": { \"values\": [";
 
-  for (size_t i = 0; i < books.size(); i++)
-  {
-    jsonBody += "{ \"stringValue\": \"" + books[i].as<String>() + "\" }";
+  for (size_t i = 0; i < books.size(); i++) {
+    String bookUID = books[i].as<String>();
+
+    jsonBody += "{ \"mapValue\": { \"fields\": {"
+                "\"uid\": {\"stringValue\": \"" + bookUID + "\"},"
+                "\"date\": {\"stringValue\": \"" + dateToReturn + "\"}"
+                "} } }";
+
     if (i < books.size() - 1)
       jsonBody += ",";
   }
@@ -482,22 +492,26 @@ void handleBorrowBooks()
   String userResponse = https.getString();
   https.end();
 
-  if (userHttpCode != 200)
-  {
+  if (userHttpCode != 200) {
     server.send(500, "text/plain", "Failed to update user borrow list.");
     return;
   }
 
-  // Step 2: Update each book's borrowed status to true
+  // Step 2: Update each book's borrowed status and return date
   bool allSuccess = true;
-  for (size_t i = 0; i < books.size(); i++)
-  {
+  for (size_t i = 0; i < books.size(); i++) {
     String bookUID = books[i].as<String>();
     String bookUrl = "https://firestore.googleapis.com/v1/projects/" + String(projectId) +
                      "/databases/(default)/documents/books/" + bookUID +
-                     "?updateMask.fieldPaths=borrowed";
+                     "?updateMask.fieldPaths=borrowed&updateMask.fieldPaths=date_to_return";
 
-    String bookPayload = "{ \"fields\": { \"borrowed\": { \"booleanValue\": true } } }";
+    // Convert date string to timestamp (e.g., "2025-06-01" → "2025-06-01T00:00:00Z")
+    String isoDate = dateToReturn + "T00:00:00Z";
+
+    String bookPayload = "{ \"fields\": {"
+                         "\"borrowed\": { \"booleanValue\": true },"
+                         "\"date_to_return\": { \"timestampValue\": \"" + isoDate + "\" }"
+                         "} }";
 
     https.begin(client, bookUrl);
     https.addHeader("Content-Type", "application/json");
@@ -505,19 +519,15 @@ void handleBorrowBooks()
     String bookResp = https.getString();
     https.end();
 
-    if (bookCode != 200)
-    {
+    if (bookCode != 200) {
       allSuccess = false;
       Serial.println("Failed to update book: " + bookUID + ", response: " + bookResp);
     }
   }
 
-  if (allSuccess)
-  {
+  if (allSuccess) {
     server.send(200, "text/plain", "Books borrowed successfully.");
-  }
-  else
-  {
+  } else {
     server.send(206, "text/plain", "Some books failed to update.");
   }
 }
