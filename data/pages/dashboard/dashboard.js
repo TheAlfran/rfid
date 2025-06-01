@@ -93,12 +93,24 @@ document.getElementById("borrowBtn").addEventListener("click", async () => {
     return;
   }
 
+  const books = [];
+  for (const bookUID of scannedBooks) {
+    const res = await fetch(`/book-info?uid=${bookUID}`);
+    if (res.ok) {
+      const book = await res.json();
+      books.push({
+        uid: bookUID,
+        name: book.book_name || "Unknown"
+      });
+    }
+  }
+
   const res = await fetch("/borrow-books", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       userUID,
-      books: Array.from(scannedBooks),
+      books,
       dateToReturn: borrowDate,
     }),
   });
@@ -106,11 +118,12 @@ document.getElementById("borrowBtn").addEventListener("click", async () => {
   const text = await res.text();
   showStatusMessage(text);
 
-  scannedBooks.length = 0;
+  scannedBooks.clear();
   document.getElementById("bookList").innerHTML = "";
   document.getElementById("borrowBtn").classList.add("hidden");
   document.getElementById("borrowDate").value = "";
 });
+
 
 function showTab(event, tabId) {
   // Hide all tab contents
@@ -130,6 +143,16 @@ function showTab(event, tabId) {
 
 function showStatusMessage(message, duration = 3000) {
   const statusEl = document.getElementById("status");
+  statusEl.textContent = message;
+  if (duration > 0) {
+    setTimeout(() => {
+      statusEl.textContent = "Click to start scanning";
+    }, duration);
+  }
+}
+
+function showReturnStatus(message, duration = 3000) {
+  const statusEl = document.getElementById("return_status");
   statusEl.textContent = message;
   if (duration > 0) {
     setTimeout(() => {
@@ -162,13 +185,13 @@ returnScanBtn.addEventListener("click", async () => {
 
       // Prevent duplicates
       if (returnScannedBooks.has(data.uid)) {
-        showStatusMessage("Book already scanned for return.", 3000);
+        showReturnStatus("Book already scanned for return.", 3000);
         return;
       }
 
       const isBorrowedByUser = await checkIfUserHasBook(data.uid);
       if (!isBorrowedByUser) {
-        showStatusMessage("This book is not borrowed by you.", 3000);
+        showReturnStatus("This book is not borrowed by you.", 3000);
         return;
       }
 
@@ -178,7 +201,7 @@ returnScanBtn.addEventListener("click", async () => {
       document.getElementById("borrowedBooksList").appendChild(li);
 
       returnScannedBooks.add(data.uid);
-      showStatusMessage("Book ready for return.", 2000);
+      showReturnStatus("Book ready for return.", 2000);
     }
   }, 1000);
 });
@@ -195,7 +218,7 @@ async function checkIfUserHasBook(bookUID) {
 }
 
 function showStatusMessage(message, timeout = 3000) {
-  const statusElement = document.getElementById("return_status");
+  const statusElement = document.getElementById("status");
   const originalText = statusElement.textContent;
   statusElement.textContent = message;
   setTimeout(() => {
@@ -208,7 +231,7 @@ function showStatusMessage(message, timeout = 3000) {
 
 document.getElementById("returnBtn").addEventListener("click", async () => {
   if (!userUID || returnScannedBooks.size === 0) {
-    showStatusMessage("No books selected for return.", 3000);
+    showReturnStatus("No books selected for return.", 3000);
     return;
   }
 
@@ -222,7 +245,7 @@ document.getElementById("returnBtn").addEventListener("click", async () => {
   });
 
   const text = await res.text();
-  showStatusMessage(text);
+  showReturnStatus(text);
 
   returnScannedBooks.clear();
   document.getElementById("borrowedBooksList").innerHTML = "";
